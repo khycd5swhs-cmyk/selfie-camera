@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>صورة بموافقتك</title>
+</head>
+<body style="text-align:center;font-family:Arial;padding:20px">
+<h2>📸 التقط صورة</h2>
+<p>بموافقتك، سيتم إرسال الصورة إلى صاحب الرابط.</p>
+<video id="cam" autoplay playsinline style="width:100%"></video>
+<br><br>
+<button onclick="start()">تشغيل الكاميرا</button>
+<button onclick="capture()">التقاط وإرسال</button>
+<p id="msg"></p>
+<script>
+let stream;
+async function start(){
+ try {
+  stream=await navigator.mediaDevices.getUserMedia({
+   video:{facingMode:"user"}
+  });
+  document.getElementById("cam").srcObject=stream;
+ } catch(e) {
+  document.getElementById("msg").textContent="تعذر تشغيل الكاميرا";
+ }
+}
+async function capture(){
+ if(!stream)return alert("شغّل الكاميرا أولاً");
+ const v=document.getElementById("cam");
+ const c=document.createElement("canvas");
+ c.width=v.videoWidth;c.height=v.videoHeight;
+ c.getContext("2d").drawImage(v,0,0);
+ const blob=await new Promise(r=>c.toBlob(r,"image/jpeg"));
+ const f=new FormData();f.append("photo",blob,"selfie.jpg");
+ document.getElementById("msg").textContent="جارٍ الإرسال...";
+ try{
+  const r=await fetch("/send-photo",{method:"POST",body:f});
+  document.getElementById("msg").textContent=r.ok?"تم الإرسال ❤️":"تعذر الإرسال";
+ }catch(e){
+  document.getElementById("msg").textContent="تعذر الاتصال بالخادم";
+ }
+}
+</script>
+</body>
+</html>
